@@ -1,0 +1,197 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  hello-world
+
+  Sample SAM Template for hello-world
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - prod
+      - stg
+      - dev
+
+Resources:
+  # Lambda function
+  # ref: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.run
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      #DeadLetterQueue:
+      Timeout: 900
+      Environment:
+        Variables:
+          SECRET_ARN: !Ref Secret
+      Tags:
+        environment: !Ref Environment
+      #KmsKeyArn:
+      #Layers:
+      Role: !GetAtt FunctionExecutionRole.Arn
+      LoggingConfig:
+        ApplicationLogLevel: INFO
+        LogFormat: JSON
+        LogGroup: !Ref FunctionLogGroup
+        SystemLogLevel: DEBUG
+      Events:
+        # Event from CloudWatch Event
+        # ref: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#schedule
+        CloudWatchEvent:
+          Type: Schedule
+          Properties:
+            # cron(minutes, hours, days, months, dates(always "?"), years)
+            # e.g. every minutes
+            Schedule: cron(* * * * ? *)
+        # Event from API Gateway
+        # ref: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        #HelloWorld:
+        #  Type: Api
+        #    Properties:
+        #      Path: /hello
+        #      Method: get
+
+  # CloudWatch
+  ## For basic monitoring
+  ### Log group
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      #LogGroupName: "/aws/lambda/HelloWorldFunction"
+      RetentionInDays: 14
+
+  ### Alarm for function error
+  FunctionErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: "LambdaFunctionErrorAlarm"
+      AlarmDescription: "Alarm when the Lambda function error count exceeds the threshold"
+      Namespace: "AWS/Lambda"
+      MetricName: "Errors"
+      Dimensions:
+        - Name: "FunctionName"
+          Value: "my-lambda-function" # 監視対象のLambda関数の名前
+      Statistic: "Sum"
+      Period: 300 # 5分間隔で評価
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: "GreaterThanThreshold"
+      TreatMissingData: "notBreaching"
+      #AlarmActions:
+      #  - arn:aws:sns:us-east-1:123456789012:my-sns-topic # アラーム通知先のSNSトピックARN
+
+  ### Alarm for function duration
+  FunctionDurationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: "LambdaFunctionDurationAlarm"
+      AlarmDescription: "Alarm when the Lambda function execution time exceeds the threshold"
+      Namespace: "AWS/Lambda"
+      MetricName: "Duration"
+      Dimensions:
+        - Name: "FunctionName"
+          Value: "my-lambda-function" # 監視対象のLambda関数の名前
+      Statistic: "Average"
+      Period: 300 # 5分間隔で評価
+      EvaluationPeriods: 1
+      Threshold: 5000 # 5秒 (ミリ秒)
+      ComparisonOperator: "GreaterThanThreshold"
+      TreatMissingData: "notBreaching"
+      #AlarmActions:
+      #  - arn:aws:sns:us-east-1:123456789012:my-sns-topic
+
+  ### Alarm for function throttle
+  FunctionThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: "LambdaFunctionThrottleAlarm"
+      AlarmDescription: "Alarm when the Lambda function throttle count exceeds the threshold"
+      Namespace: "AWS/Lambda"
+      MetricName: "Throttles"
+      Dimensions:
+        - Name: "FunctionName"
+          Value: "my-lambda-function" # 監視対象のLambda関数の名前
+      Statistic: "Sum"
+      Period: 300 # 5分間隔で評価
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: "GreaterThanThreshold"
+      TreatMissingData: "notBreaching"
+      #AlarmActions:
+      #  - arn:aws:sns:us-east-1:123456789012:my-sns-topic
+
+  # IAM Role
+  FunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      #RoleName: MyLambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - "*"
+        - PolicyName: SecretManagerPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref Secret
+
+  # surrounding resources
+  ## DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}.
+  ##ref: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlesssimpletable
+  SampleTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+
+  ## Secrets Manager
+  Secret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: MySecret
+      Description: "Secret for storing sensitive information"
+      SecretString: '{"username": "admin", "password": "secret-password"}' # シークレットの内容（例）
+
+#Outputs:
+#   ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+#   Find out more about other implicit resources you can reference within SAM
+#   https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+#  HelloWorldApi:
+#    Description: API Gateway endpoint URL for Prod stage for Hello World function
+#    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+#  HelloWorldFunction:
+#    Description: Hello World Lambda Function ARN
+#    Value: !GetAtt HelloWorldFunction.Arn
+#  HelloWorldFunctionIamRole:
+#    Description: Implicit IAM Role created for Hello World function
+#    Value: !GetAtt HelloWorldFunctionRole.Arn
