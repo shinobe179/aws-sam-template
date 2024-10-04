@@ -12,6 +12,7 @@ Parameters:
       - prod
       - stg
       - dev
+      - test
 
 Resources:
   ##########
@@ -85,7 +86,7 @@ Resources:
       MetricName: "Errors"
       Dimensions:
         - Name: "FunctionName"
-          Value: "my-lambda-function" # 監視対象のLambda関数の名前
+          Value: !Ref HelloWorldFunction
       Statistic: "Sum"
       Period: 300 # 5分間隔で評価
       EvaluationPeriods: 1
@@ -105,7 +106,7 @@ Resources:
       MetricName: "Duration"
       Dimensions:
         - Name: "FunctionName"
-          Value: "my-lambda-function" # 監視対象のLambda関数の名前
+          Value: !Ref HelloWorldFunction
       Statistic: "Average"
       Period: 300 # 5分間隔で評価
       EvaluationPeriods: 1
@@ -125,7 +126,7 @@ Resources:
       MetricName: "Throttles"
       Dimensions:
         - Name: "FunctionName"
-          Value: "my-lambda-function" # 監視対象のLambda関数の名前
+          Value: !Ref HelloWorldFunction
       Statistic: "Sum"
       Period: 300 # 5分間隔で評価
       EvaluationPeriods: 1
