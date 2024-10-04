@@ -14,8 +14,14 @@ Parameters:
       - dev
 
 Resources:
-  # Lambda function
+  ##########
+  #        #
+  # Lambda #
+  #        #
+  ##########
+
   # ref: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -56,13 +62,17 @@ Resources:
         #      Path: /hello
         #      Method: get
 
-  # CloudWatch
+  ##############
+  #            #
+  # CloudWatch #
+  #            #
+  ##############
+
   ## For basic monitoring
   ### Log group
   FunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      #LogGroupName: "/aws/lambda/HelloWorldFunction"
       RetentionInDays: 14
 
   ### Alarm for function error
@@ -125,6 +135,12 @@ Resources:
       #AlarmActions:
       #  - arn:aws:sns:us-east-1:123456789012:my-sns-topic
 
+  #######
+  #     #
+  # IAM #
+  #     #
+  #######
+
   # IAM Role
   FunctionExecutionRole:
     Type: AWS::IAM::Role
@@ -161,7 +177,12 @@ Resources:
                 Resource:
                   - !Ref Secret
 
-  # surrounding resources
+  ############
+  #          #
+  # DynamoDB #
+  #          #
+  ############
+
   ## DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}.
   ##ref: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlesssimpletable
   SampleTable:
@@ -174,7 +195,12 @@ Resources:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
 
-  ## Secrets Manager
+  ###################
+  #                 #
+  # Secrets Manager #
+  #                 #
+  ###################
+
   Secret:
     Type: AWS::SecretsManager::Secret
     Properties:
