@@ -1,11 +1,17 @@
-AWS SAMテンプレート
----
+## AWS SAM テンプレート
 
-AWS SAMに個人的な改良を加えたテンプレートです。
+AWS SAM に個人的な改良を加えたテンプレートです。
 
-- 独自CloudWatch Logsロググループの追加
-- Lambda関数の標準的な監視のためのCloudWatchアラーム
+- 独自 CloudWatch Logs ロググループの追加
+- Lambda 関数の標準的な監視のための CloudWatch アラーム
 - Secrets Manger
-- CloudWatch Eventスケジューラのサンプル設定
-- 上記を使うための独自IAMロールと関数へのアタッチ
+- CloudWatch Event スケジューラのサンプル設定
+- 上記を使うための独自 IAM ロールと関数へのアタッチ
 
+# 使い方
+
+## デプロイ
+
+```
+sam deploy --parameter-overrides Stage=[ prod | stg | dev | test ]
+```
