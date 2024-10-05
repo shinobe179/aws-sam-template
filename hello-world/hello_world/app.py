@@ -10,6 +10,9 @@ def run(event, context):
     print('Function works.')
     print(json.dumps(get_secret(os.environ['SECRET_ARN'])))
 
+    # for testing CloudWatch alarm
+    raise Exception
+
 
 def get_secret(arn):
 
