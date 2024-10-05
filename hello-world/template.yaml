@@ -37,7 +37,7 @@ Resources:
         Variables:
           SECRET_ARN: !Ref Secret
       Tags:
-        environment: !Ref Environment
+        Stage: !Ref Stage
       #KmsKeyArn:
       #Layers:
       Role: !GetAtt FunctionExecutionRole.Arn
@@ -74,13 +74,15 @@ Resources:
   FunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
+      LogGroupName: /aws/lambda/hello_world
       RetentionInDays: 14
+    DeletionPolicy: RetainExceptOnCreate
+    UpdateReplacePolicy: Delete
 
   ### Alarm for function error
   FunctionErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: "LambdaFunctionErrorAlarm"
       AlarmDescription: "Alarm when the Lambda function error count exceeds the threshold"
       Namespace: "AWS/Lambda"
       MetricName: "Errors"
@@ -100,7 +102,6 @@ Resources:
   FunctionDurationAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: "LambdaFunctionDurationAlarm"
       AlarmDescription: "Alarm when the Lambda function execution time exceeds the threshold"
       Namespace: "AWS/Lambda"
       MetricName: "Duration"
@@ -120,7 +121,6 @@ Resources:
   FunctionThrottleAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: "LambdaFunctionThrottleAlarm"
       AlarmDescription: "Alarm when the Lambda function throttle count exceeds the threshold"
       Namespace: "AWS/Lambda"
       MetricName: "Throttles"
@@ -146,7 +146,6 @@ Resources:
   FunctionExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      #RoleName: MyLambdaExecutionRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -205,7 +204,6 @@ Resources:
   Secret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: MySecret
       Description: "Secret for storing sensitive information"
       SecretString: '{"username": "admin", "password": "secret-password"}' # シークレットの内容（例）
 
