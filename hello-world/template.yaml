@@ -6,7 +6,7 @@ Description: >
   Sample SAM Template for hello-world
 
 Parameters:
-  Environment:
+  Stage:
     Type: String
     AllowedValues:
       - prod
